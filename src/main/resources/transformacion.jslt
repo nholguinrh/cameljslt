@@ -1,0 +1,10 @@
+{
+  "variable1": "usuario",
+  "variable1-cuenta": .usuario[0],
+  "variable1-ciudad": .usuario[1],
+  "variable1-tipocuenta": .usuario[2],
+  "variable2": "saldo",
+  "variable2-valor": .saldo,
+  "variable3": "activo",
+  "variable3-estado": .activo
+}
