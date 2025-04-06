@@ -8,7 +8,7 @@ public class KafkaToLogRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        from("kafka:my-topic?brokers=my-cluster-kafka-bootstrap.amq-streams-kafka:9092")
+        from("kafka:my-topic?brokers=amq-streams-kafka-kafka-bootstrap.amq-streams-kafka.svc:9092")
             .routeId("kafka-jslt-log")
             .log("Mensaje original desde Kafka: ${body}")
             .to("jslt:classpath:transformacion.jslt")
