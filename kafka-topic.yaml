@@ -1,0 +1,40 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: my-topic
+  namespace: amq-streams-kafka  # ¡Importante! Debe ser el namespace donde vive el clúster Kafka
+  labels:
+    strimzi.io/cluster: amq-streams-kafka  # Nombre del Kafka definido en el CR Kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 86400000       # 1 día
+    segment.bytes: 1073741824    # 1GB
+---
+apiVersion: camel.apache.org/v1
+kind: Integration
+metadata:
+  name: send-json-to-kafka
+  namespace: dev-transformation
+spec:
+  flows:
+    - from:
+        uri: timer:tick
+        parameters:
+          period: 1000
+        steps:
+          - set-body:
+              expression:
+                simple: >
+                  {
+                    "usuario": ["123456", "Bogotá", "ahorros"],
+                    "saldo": 350000,
+                    "activo": true
+                  }
+          - marshal:
+              json: {}
+          - to:
+              uri: kafka:my-topic
+              parameters:
+                brokers: amq-streams-kafka-kafka-bootstrap.amq-streams-kafka.svc:9092
