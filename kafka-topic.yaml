@@ -37,4 +37,4 @@ spec:
           - to:
               uri: kafka:my-topic
               parameters:
-                brokers: amq-streams-kafka-kafka-bootstrap.amq-streams-kafka.svc:9092
+                brokers: cluster-nonprod01-kafka-bootstrap.amq-streams-kafka:9092
