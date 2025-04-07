@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: my-topic
+  name: my-topic1
   namespace: amq-streams-kafka  # ¡Importante! Debe ser el namespace donde vive el clúster Kafka
   labels:
     strimzi.io/cluster: amq-streams-kafka  # Nombre del Kafka definido en el CR Kafka
@@ -35,6 +35,61 @@ spec:
           - marshal:
               json: {}
           - to:
-              uri: kafka:my-topic
+              uri: kafka:my-topic1
+              parameters:
+                brokers: cluster-nonprod01-kafka-bootstrap.amq-streams-kafka:9092
+---
+apiVersion: camel.apache.org/v1
+kind: Integration
+metadata:
+  name: api-to-kafka
+  namespace: dev-transformation
+spec:
+  flows:
+    - from:
+        uri: timer:api-poller # ¡Importante! Esta es la version para consumo REST con GET
+        parameters:
+          period: 1000
+        steps:
+          - to:
+              uri: https://prdct-transact-env0-test-3scale-apicast-staging.apps.os-nonprod.domcoin.net/CreateLoan
+          - convert-body-to:
+              type: String
+          - to:
+              uri: kafka:my-topic1
+              parameters:
+                brokers: cluster-nonprod01-kafka-bootstrap.amq-streams-kafka:9092
+---
+apiVersion: camel.apache.org/v1
+kind: Integration
+metadata:
+  name: api-post-to-kafka
+  namespace: dev-transformation
+spec:
+  flows:
+    - from:
+        uri: timer:api-poller # ¡Importante! Esta es la version para consumo REST con POST
+        parameters:
+          period: 1000
+        steps:
+          - set-header:
+              name: CamelHttpMethod
+              constant: POST
+          - set-header:
+              name: Content-Type
+              constant: application/json
+          - set-body:
+              constant: >
+                {
+                  "clientId": "123456",
+                  "loanAmount": 1000000,
+                  "currency": "COP"
+                }             # ¡Importante! Estos serian los datos POST
+          - to:
+              uri: https://prdct-transact-env0-test-3scale-apicast-staging.apps.os-nonprod.domcoin.net/CreateLoan
+          - convert-body-to:
+              type: String
+          - to:
+              uri: kafka:my-topic1
               parameters:
                 brokers: cluster-nonprod01-kafka-bootstrap.amq-streams-kafka:9092
